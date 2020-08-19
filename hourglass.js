@@ -60,6 +60,7 @@ function drawGrainsTop(ctx, grainCount){
     }
 }
 
+//maybe draw 80% as full grains
 function drawGrainsBottom(ctx, grainCount){
     ctx.fillStyle = getGrainStyle();
     //todo memoize
@@ -68,11 +69,17 @@ function drawGrainsBottom(ctx, grainCount){
     for(y = HEIGHT; y >= HEIGHT/2; y--){
         const grainsInThisRow = grainsInRow(y);
         //draw full row if we can
+        let leftBorder = getLeftBorder(y);
+        let rightBorder = getRightBorder(y);
         if((currentGrains + grainsInThisRow) < grainCount){
-            let leftBorder = getLeftBorder(y);
-            let rightBorder = getRightBorder(y);
             ctx.fillRect(leftBorder, y, rightBorder-leftBorder, 1);
             currentGrains += grainsInThisRow;
+        }
+        else{
+            //fill partial bottom row growing from outside in
+            let remainingGrains = grainCount - currentGrains;
+            ctx.fillRect((WIDTH/2-remainingGrains/2), y, remainingGrains, 1);
+            return;
         }
     }
 }
@@ -90,7 +97,7 @@ function getGrainCountTop(){
 function draw() {
     let ctx = getContext();
     drawBorders(ctx);
-    const grainCountTotal = 4000;
+    const grainCountTotal = 4800;
     const grainCountTop = getGrainCountTop();
     const grainCountBottom = grainCountTotal - grainCountTop;
     drawGrainsTop(ctx, grainCountTop);
