@@ -2,7 +2,14 @@ const WIDTH = 80;
 const HEIGHT = 160;
 
 function getLeftBorder(y){
-    return Math.max(0, 120-y);
+    if(y < 40)
+        return 0;
+    else if(y < 80)
+        return y-40;
+    else if(y < 120)
+        return 120-y;
+    else
+        return 0;
 }
 
 //TODO inline
@@ -21,7 +28,7 @@ function drawBorders(ctx) {
 }
 
 function grainsInRow(y){
-    return (getLeftBorder(y) * 2 - WIDTH);
+    return (WIDTH - getLeftBorder(y) * 2);
 }
 
 function getGrainStyle(){
@@ -46,7 +53,20 @@ function drawGrainsTop(ctx, grainCount){
 }
 
 function drawGrainsBottom(ctx, grainCount){
-
+    ctx.fillStyle = getGrainStyle();
+    //todo memoize
+    //calculate amount of full rows
+    let currentGrains = 0;
+    for(y = HEIGHT; y >= HEIGHT/2; y--){
+        const grainsInThisRow = grainsInRow(y);
+        //draw full row if we can
+        if((currentGrains + grainsInThisRow) < grainCount){
+            let leftBorder = getLeftBorder(y);
+            let rightBorder = getRightBorder(y);
+            ctx.fillRect(leftBorder, y, rightBorder-leftBorder, 1);
+            currentGrains += grainsInThisRow;
+        }
+    }
 }
 
 function getContext() {
@@ -54,12 +74,19 @@ function getContext() {
     return canvas.getContext("2d");
 }
 
+function getGrainCountTop(){
+    let grains = document.getElementById("grains");
+    return grains.value;
+}
+
 function draw() {
     let ctx = getContext();
     drawBorders(ctx);
-    const grainCount = 900;
-    drawGrainsTop(ctx, grainCount);
-    drawGrainsBottom(ctx, grainCount);
+    const grainCountTotal = 4000;
+    const grainCountTop = getGrainCountTop();
+    const grainCountBottom = grainCountTotal - grainCountTop;
+    drawGrainsTop(ctx, grainCountTop);
+    drawGrainsBottom(ctx, grainCountBottom);
 }
 
 window.onload = draw();
