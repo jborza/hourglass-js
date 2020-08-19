@@ -43,11 +43,19 @@ function drawGrainsTop(ctx, grainCount){
     for(y = 80; y >= 0; y--){
         const grainsInThisRow = grainsInRow(y);
         //draw full row if we can
+        let leftBorder = getLeftBorder(y);
+        let rightBorder = getRightBorder(y);
         if((currentGrains + grainsInThisRow) < grainCount){
-            let leftBorder = getLeftBorder(y);
-            let rightBorder = getRightBorder(y);
             ctx.fillRect(leftBorder, y, rightBorder-leftBorder, 1);
             currentGrains += grainsInThisRow;
+        }
+        else{
+            //draw partial row - disappearing from center out
+            let remainingGrains = grainCount - currentGrains;
+            let leftHalf = remainingGrains / 2;
+            ctx.fillRect(leftBorder, y, leftHalf, 1);
+            ctx.fillRect(rightBorder-leftHalf, y, leftHalf, 1);
+            return;
         }
     }
 }
