@@ -90,18 +90,41 @@ function getContext() {
 }
 
 function getGrainCountTop(){
-    let grains = document.getElementById("grains");
-    return grains.value;
+    return grainCountTotal - grains.value;
 }
 
 function draw() {
     let ctx = getContext();
     drawBorders(ctx);
-    const grainCountTotal = 4800;
     const grainCountTop = getGrainCountTop();
     const grainCountBottom = grainCountTotal - grainCountTop;
     drawGrainsTop(ctx, grainCountTop);
     drawGrainsBottom(ctx, grainCountBottom);
 }
 
-window.onload = draw();
+function toggleAutorefresh(){
+
+}
+
+function reset(){
+    grains.value = 0;
+    draw();
+}
+
+const grainCountTotal = 4800;
+var autorefreshCheckbox;
+
+function tick(){
+    if(!autorefreshCheckbox.checked)
+        return;
+    console.log('tick');
+    grains.value = grains.valueAsNumber + 1;
+    draw();
+}
+
+function onload(){
+    autorefreshCheckbox = document.getElementById("autorefreshCheckbox");
+    grains = document.getElementById("grains");
+    setInterval(tick, 1000/60);
+    draw();
+}
