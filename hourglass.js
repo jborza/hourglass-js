@@ -118,14 +118,14 @@ function dropGrains() {
             }
             //if there IS a grain underneath - check if we can fall to the left
             else if (y < BOTTOM_HEIGHT - 2) {
-                if (x > 0 && bottomGrains[y + 2][x - 1] === 0) {
+                if (x > 0 && bottomGrains[y + 1][x - 1] === 0) {
                     //swap the grains
-                    bottomGrains[y + 2][x - 1] = 1;
+                    bottomGrains[y + 1][x - 1] = 1;
                     bottomGrains[y][x] = 0;
                 } //look to the right
-                else if (x < WIDTH - 2 && bottomGrains[y + 2][x + 1] === 0) {
+                else if (x < WIDTH - 2 && bottomGrains[y + 1][x + 1] === 0) {
                     //swap the grains
-                    bottomGrains[y + 2][x + 1] = 1;
+                    bottomGrains[y + 1][x + 1] = 1;
                     bottomGrains[y][x] = 0;
                 }
             }
@@ -179,25 +179,6 @@ function initializeBottomGrains() {
     for (let i = 0; i < WIDTH; i++) {
         bottomGrains.push(new Array(HEIGHT / 2).fill(0));
     }
-    //  for (let i = 0; i < HEIGHT / 2; i++) {
-    //      bottomGrains[i][WIDTH / 2] = 1;
-    //      bottomGrains[i][WIDTH / 2 - 1] = 1;
-    //      bottomGrains[i][WIDTH / 2 + 1] = 1;
-    //  }
-    // bottomGrains[47][WIDTH / 2] = 1;
-    // bottomGrains[57][WIDTH / 2] = 1;
-    // bottomGrains[60][WIDTH / 2] = 1;
-    // bottomGrains[62][WIDTH / 2] = 1;
-    // bottomGrains[64][WIDTH / 2] = 1;
-    // bottomGrains[67][WIDTH / 2] = 1;
-    // bottomGrains[68][WIDTH / 2] = 1;
-    // bottomGrains[70][WIDTH / 2] = 1;
-    // bottomGrains[73][WIDTH / 2] = 1;
-    // bottomGrains[77][WIDTH / 2] = 1;
-    // bottomGrains[78][WIDTH / 2] = 1;
-    // bottomGrains[0][WIDTH / 2] = 1;
-    // bottomGrains[10][WIDTH / 2] = 1;
-    // bottomGrains[11][WIDTH / 2] = 1;
     return bottomGrains;
 }
 
@@ -206,7 +187,7 @@ function spawn() {
 
 }
 
-function drawGrainsBottom(ctx, grainCount) {
+function drawGrainsBottom(ctx) {
     ctx.fillStyle = getGrainStyle();
 
     for (let y = BOTTOM_HEIGHT - 1; y >= 0; y--) {
@@ -283,9 +264,8 @@ function draw() {
     let ctx = getContext();
     drawBorders(ctx);
     const grainCountTop = getGrainCountTop();
-    const grainCountBottom = grainCountTotal - grainCountTop;
     drawGrainsTop(ctx, grainCountTop);
-    drawGrainsBottom(ctx, grainCountBottom);
+    drawGrainsBottom(ctx);
 }
 
 function reset() {
@@ -305,6 +285,11 @@ function tick() {
 }
 
 function manualTick() {
+    grains.value = grains.valueAsNumber + 1;
+    spawn();
+    physicsStep();
+    spawn();
+    physicsStep();
     spawn();
     physicsStep();
     draw();
