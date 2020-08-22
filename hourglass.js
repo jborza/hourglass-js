@@ -2,6 +2,7 @@ const WIDTH = 80;
 const HEIGHT = 160;
 const BOTTOM_HEIGHT = 80;
 const TOP_HEIGHT = 80;
+const grainCountTotal = 4800;
 
 function getLeftBorder(y) {
     if (y < 40)
@@ -70,7 +71,7 @@ function getGrainsInPyramid(pyramidHeight) {
 }
 
 function getPyramidHeight(grains) {
-    //TODO invert getGrainsInPyramid
+    //TODO invert getGrainsInPyramid or optimize with a table
     let grainsInPyramid = 0;
     const PYRAMID_MAX_HEIGHT = 40;
     for (let h = 1; h <= PYRAMID_MAX_HEIGHT; h++) {
@@ -102,7 +103,37 @@ function getColumnHeights() {
     return columnHeights;
 }
 
-function swapGrains(columnHeights, column, otherColumn) {
+function dropGrains() {
+    //note that we skip bottom-most row as nothing can happen there
+    for (let y = BOTTOM_HEIGHT - 2; y >= 0; y--) {
+        for (let x = 0; x < WIDTH; x++) {
+            //if there's no grain, don't do anything
+            if (bottomGrains[y][x] === 0) {
+                continue;
+            }
+            //if there's a space under a grain, let it fall
+            else if (bottomGrains[y + 1][x] === 0) {
+                bottomGrains[y + 1][x] = 1;
+                bottomGrains[y][x] = 0;
+            }
+            //if there IS a grain underneath - check if we can fall to the left
+            else if (y < BOTTOM_HEIGHT - 2) {
+                if (x > 0 && bottomGrains[y + 2][x - 1] === 0) {
+                    //swap the grains
+                    bottomGrains[y + 2][x - 1] = 1;
+                    bottomGrains[y][x] = 0;
+                } //look to the right
+                else if (x < WIDTH - 2 && bottomGrains[y + 2][x + 1] === 0) {
+                    //swap the grains
+                    bottomGrains[y + 2][x + 1] = 1;
+                    bottomGrains[y][x] = 0;
+                }
+            }
+        }
+    }
+}
+
+function dropGrainToTheSide(columnHeights, column, otherColumn) {
     const height = bottomGrains.length;
     if (columnHeights[column] > columnHeights[otherColumn] + 1) {
         const thisColumnY = height - columnHeights[column];
@@ -116,24 +147,6 @@ function swapGrains(columnHeights, column, otherColumn) {
     }
 }
 
-function dropGrains() {
-    //note that we skip bottom-most row as nothing can happen there
-    for (let y = BOTTOM_HEIGHT - 2; y >= 0; y--) {
-        for (let x = 0; x < WIDTH; x++) {
-            //if there's no grain, don't do anything
-            if (bottomGrains[y][x] === 0) {
-                continue;
-            }
-            //if there's a space under a grain, let it fall
-            if (bottomGrains[y + 1][x] === 0) {
-                bottomGrains[y + 1][x] = 1;
-                bottomGrains[y][x] = 0;
-            }
-
-        }
-    }
-}
-
 function settleGrains() {
     let columnHeights = getColumnHeights();
     const columnCount = bottomGrains[0].length;
@@ -141,12 +154,12 @@ function settleGrains() {
         //check if the grain can fall over to the left
         let otherColumn = column - 1;
         if (column > 0) {
-            swapGrains(columnHeights, column, otherColumn);
+            dropGrainToTheSide(columnHeights, column, otherColumn);
         }
         //check if the grain can fall over to the right
         otherColumn = column + 1;
         if (column < columnCount - 2) {
-            swapGrains(columnHeights, column, otherColumn);
+            dropGrainToTheSide(columnHeights, column, otherColumn);
         }
     }
 }
@@ -166,13 +179,31 @@ function initializeBottomGrains() {
     for (let i = 0; i < WIDTH; i++) {
         bottomGrains.push(new Array(HEIGHT / 2).fill(0));
     }
-    // for (let i = 0; i < HEIGHT / 2; i++) {
-    //     bottomGrains[i][WIDTH / 2] = 1;
-    //     bottomGrains[i][WIDTH / 2 - 1] = 1;
-    //     bottomGrains[i][WIDTH / 2 + 1] = 1;
-    // }
-    bottomGrains[77][WIDTH / 2] = 1;
+    //  for (let i = 0; i < HEIGHT / 2; i++) {
+    //      bottomGrains[i][WIDTH / 2] = 1;
+    //      bottomGrains[i][WIDTH / 2 - 1] = 1;
+    //      bottomGrains[i][WIDTH / 2 + 1] = 1;
+    //  }
+    // bottomGrains[47][WIDTH / 2] = 1;
+    // bottomGrains[57][WIDTH / 2] = 1;
+    // bottomGrains[60][WIDTH / 2] = 1;
+    // bottomGrains[62][WIDTH / 2] = 1;
+    // bottomGrains[64][WIDTH / 2] = 1;
+    // bottomGrains[67][WIDTH / 2] = 1;
+    // bottomGrains[68][WIDTH / 2] = 1;
+    // bottomGrains[70][WIDTH / 2] = 1;
+    // bottomGrains[73][WIDTH / 2] = 1;
+    // bottomGrains[77][WIDTH / 2] = 1;
+    // bottomGrains[78][WIDTH / 2] = 1;
+    // bottomGrains[0][WIDTH / 2] = 1;
+    // bottomGrains[10][WIDTH / 2] = 1;
+    // bottomGrains[11][WIDTH / 2] = 1;
     return bottomGrains;
+}
+
+function spawn() {
+    bottomGrains[0][WIDTH / 2] = 1;
+
 }
 
 function drawGrainsBottom(ctx, grainCount) {
@@ -262,7 +293,6 @@ function reset() {
     draw();
 }
 
-const grainCountTotal = 4800;
 var autorefreshCheckbox;
 
 function tick() {
@@ -271,9 +301,11 @@ function tick() {
     if (grains.valueAsNumber >= grainCountTotal)
         return;
     console.log('tick');
+    manualTick();
 }
 
 function manualTick() {
+    spawn();
     physicsStep();
     draw();
 }
