@@ -1,5 +1,7 @@
 const WIDTH = 80;
 const HEIGHT = 160;
+const BOTTOM_HEIGHT = 80;
+const TOP_HEIGHT = 80;
 
 function getLeftBorder(y) {
     if (y < 40)
@@ -40,7 +42,7 @@ function drawGrainsTop(ctx, grainCount) {
     //todo memoize
     //calculate amount of full rows
     let currentGrains = 0;
-    for (let y = 80; y >= 0; y--) {
+    for (let y = TOP_HEIGHT - 1; y >= 0; y--) {
         const grainsInThisRow = grainsInRow(y);
         //draw full row if we can
         let leftBorder = getLeftBorder(y);
@@ -114,7 +116,25 @@ function swapGrains(columnHeights, column, otherColumn) {
     }
 }
 
-function physicsStep() {
+function dropGrains() {
+    //note that we skip bottom-most row as nothing can happen there
+    for (let y = BOTTOM_HEIGHT - 2; y >= 0; y--) {
+        for (let x = 0; x < WIDTH; x++) {
+            //if there's no grain, don't do anything
+            if (bottomGrains[y][x] === 0) {
+                continue;
+            }
+            //if there's a space under a grain, let it fall
+            if (bottomGrains[y + 1][x] === 0) {
+                bottomGrains[y + 1][x] = 1;
+                bottomGrains[y][x] = 0;
+            }
+
+        }
+    }
+}
+
+function settleGrains() {
     let columnHeights = getColumnHeights();
     const columnCount = bottomGrains[0].length;
     for (let column = 0; column < columnCount; column++) {
@@ -131,6 +151,14 @@ function physicsStep() {
     }
 }
 
+function physicsStep() {
+    //first let the grains fall
+    dropGrains();
+
+    //then let the grains settle
+    //settleGrains();
+}
+
 let bottomGrains = initializeBottomGrains();
 
 function initializeBottomGrains() {
@@ -138,21 +166,22 @@ function initializeBottomGrains() {
     for (let i = 0; i < WIDTH; i++) {
         bottomGrains.push(new Array(HEIGHT / 2).fill(0));
     }
-    for (let i = 0; i < HEIGHT / 2; i++) {
-        bottomGrains[i][WIDTH / 2] = 1;
-        bottomGrains[i][WIDTH / 2 - 1] = 1;
-        bottomGrains[i][WIDTH / 2 + 1] = 1;
-    }
+    // for (let i = 0; i < HEIGHT / 2; i++) {
+    //     bottomGrains[i][WIDTH / 2] = 1;
+    //     bottomGrains[i][WIDTH / 2 - 1] = 1;
+    //     bottomGrains[i][WIDTH / 2 + 1] = 1;
+    // }
+    bottomGrains[77][WIDTH / 2] = 1;
     return bottomGrains;
 }
 
 function drawGrainsBottom(ctx, grainCount) {
     ctx.fillStyle = getGrainStyle();
 
-    for (let y = HEIGHT; y > HEIGHT / 2; y--) {
+    for (let y = BOTTOM_HEIGHT - 1; y >= 0; y--) {
         for (let x = 0; x < WIDTH; x++) {
-            if (bottomGrains[y - 80 - 1][x] === 1) {
-                ctx.fillRect(x, y, 1, 1);
+            if (bottomGrains[y][x] === 1) {
+                ctx.fillRect(x, y + BOTTOM_HEIGHT, 1, 1);
             }
         }
     }
@@ -242,7 +271,6 @@ function tick() {
     if (grains.valueAsNumber >= grainCountTotal)
         return;
     console.log('tick');
-
 }
 
 function manualTick() {
