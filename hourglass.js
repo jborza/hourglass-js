@@ -48,8 +48,7 @@ function drawGrainsTop(ctx, grainCount) {
         if ((currentGrains + grainsInThisRow) < grainCount) {
             ctx.fillRect(leftBorder, y, rightBorder - leftBorder, 1);
             currentGrains += grainsInThisRow;
-        }
-        else {
+        } else {
             //draw partial row - disappearing from center out
             let remainingGrains = grainCount - currentGrains;
             let leftHalf = remainingGrains / 2;
@@ -84,8 +83,82 @@ function getGrainsInPyramidRow(row) {
     return row * 2 - 1;
 }
 
-//maybe draw 80% as full grains
+function getColumnHeights() {
+    let columnHeights = [];
+    const height = bottomGrains.length;
+    //go through columns
+    for (let column = 0; column < bottomGrains[0].length; column++) {
+        columnHeights[column] = 0; //pessimistic assumption
+        //find any column that is more than 2 px taller than the neighbor
+        for (let row = 0; row < height; row++) {
+            if (bottomGrains[row][column] === 1) {
+                columnHeights[column] = height - row;
+                break;
+            }
+        }
+    }
+    return columnHeights;
+}
+
+function swapGrains(columnHeights, column, otherColumn) {
+    const height = bottomGrains.length;
+    if (columnHeights[column] > columnHeights[otherColumn] + 1) {
+        const thisColumnY = height - columnHeights[column];
+        const leftColumnY = height - columnHeights[otherColumn] - 1;
+        //this grain disappears
+        bottomGrains[thisColumnY][column] = 0;
+        columnHeights[column] -= 1;
+        //to the column on the left and change the heights
+        bottomGrains[leftColumnY][otherColumn] = 1;
+        columnHeights[otherColumn] += 1;
+    }
+}
+
+function physicsStep() {
+    let columnHeights = getColumnHeights();
+    const columnCount = bottomGrains[0].length;
+    for (let column = 0; column < columnCount; column++) {
+        //check if the grain can fall over to the left
+        let otherColumn = column - 1;
+        if (column > 0) {
+            swapGrains(columnHeights, column, otherColumn);
+        }
+        //check if the grain can fall over to the right
+        otherColumn = column + 1;
+        if (column < columnCount - 2) {
+            swapGrains(columnHeights, column, otherColumn);
+        }
+    }
+}
+
+let bottomGrains = initializeBottomGrains();
+
+function initializeBottomGrains() {
+    let bottomGrains = [];
+    for (let i = 0; i < WIDTH; i++) {
+        bottomGrains.push(new Array(HEIGHT / 2).fill(0));
+    }
+    for (let i = 0; i < HEIGHT / 2; i++) {
+        bottomGrains[i][WIDTH / 2] = 1;
+        bottomGrains[i][WIDTH / 2 - 1] = 1;
+        bottomGrains[i][WIDTH / 2 + 1] = 1;
+    }
+    return bottomGrains;
+}
+
 function drawGrainsBottom(ctx, grainCount) {
+    ctx.fillStyle = getGrainStyle();
+
+    for (let y = HEIGHT; y > HEIGHT / 2; y--) {
+        for (let x = 0; x < WIDTH; x++) {
+            if (bottomGrains[y - 80 - 1][x] === 1) {
+                ctx.fillRect(x, y, 1, 1);
+            }
+        }
+    }
+}
+
+function drawGrainsBottomOld(ctx, grainCount) {
     ctx.fillStyle = getGrainStyle();
 
     let currentGrains = 0;
@@ -169,7 +242,11 @@ function tick() {
     if (grains.valueAsNumber >= grainCountTotal)
         return;
     console.log('tick');
-    grains.value = grains.valueAsNumber + 7;
+
+}
+
+function manualTick() {
+    physicsStep();
     draw();
 }
 
